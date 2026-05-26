@@ -1,0 +1,112 @@
+﻿@page "/tipoclientes/nueva"
+@page "/tipoclientes/editar/{Id:int}"
+
+@rendermode InteractiveServer
+
+@using Segunda4F.Data
+@using Segunda4F.Repositorios
+
+@inject IRepositorioTipoClientes _repositorioTipoClientes
+@inject NavigationManager _navigationManager
+
+<PageTitle>Tipos de Cliente</PageTitle>
+
+<h3>Tipos de Cliente</h3>
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>No se encontró el tipo de cliente.</h2>
+    </div>
+}
+else
+{
+    <EditForm Model="_tipoCliente"
+              FormName="frmTipoCliente"
+              OnValidSubmit="Guardar">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row mb-3 align-items-center">
+            <div class="col-2">
+                <label class="col-form-label">
+                    Nombre
+                </label>
+            </div>
+
+            <div class="col-10">
+                <InputText class="form-control"
+                           @bind-Value="_tipoCliente.Nombre" />
+
+                <ValidationMessage For="@(() => _tipoCliente.Nombre)" />
+            </div>
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary">
+            Guardar
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                @onclick="Cancelar">
+            Cancelar
+        </button>
+
+    </EditForm>
+}
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    private TipoCliente _tipoCliente = new();
+
+    private bool _error = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue && Id.Value > 0)
+        {
+            var tipo =
+                await _repositorioTipoClientes
+                .ObtenerTipoClientePorId(Id.Value);
+
+            if (tipo == null)
+            {
+                _error = true;
+            }
+            else
+            {
+                _tipoCliente = tipo;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id.HasValue && Id.Value > 0)
+        {
+            await _repositorioTipoClientes
+                .ActualizarTipoCliente(
+                    _tipoCliente);
+        }
+        else
+        {
+            await _repositorioTipoClientes
+                .AgregarTipoCliente(
+                    _tipoCliente);
+        }
+
+        _navigationManager
+            .NavigateTo("/tipoclientes");
+    }
+
+    private void Cancelar()
+    {
+        _navigationManager
+            .NavigateTo("/tipoclientes");
+    }
+}

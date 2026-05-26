@@ -1,0 +1,84 @@
+﻿@page "/intereses"
+
+@rendermode InteractiveServer
+
+@using Segunda4F.Data
+@using Segunda4F.Repositorios
+@using Microsoft.AspNetCore.Components.QuickGrid
+
+@inject NavigationManager _navigationManager
+@inject IRepositorioIntereses _repositorioIntereses
+
+<PageTitle>Intereses</PageTitle>
+
+<h3>Intereses</h3>
+
+<button class="btn btn-primary mb-3"
+        @onclick="Nuevo">
+    Nuevo Interés
+</button>
+
+<QuickGrid Items="_intereses.AsQueryable()"
+           Class="table table-striped"
+           Pagination="_paginationState">
+
+    <PropertyColumn Property="@(p => p.Nombre)"
+                    Title="Nombre"
+                    Sortable="true" />
+
+    <TemplateColumn Title="Acciones">
+
+        <button class="btn btn-outline-primary"
+                @onclick="@(() => Edit(context))">
+            Editar
+        </button>
+
+        <button class="btn btn-outline-danger"
+                @onclick="@(() => Delete(context))">
+            Eliminar
+        </button>
+
+    </TemplateColumn>
+
+</QuickGrid>
+
+<Paginator State="_paginationState" />
+
+@code {
+
+    private List<Interes>
+        _intereses = new();
+
+    private PaginationState
+        _paginationState =
+            new() { ItemsPerPage = 5 };
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        _intereses =
+            await _repositorioIntereses
+            .ObtenerIntereses();
+    }
+
+    private void Nuevo()
+    {
+        _navigationManager
+            .NavigateTo("/intereses/nuevo");
+    }
+
+    private void Edit(Interes interes)
+    {
+        _navigationManager.NavigateTo(
+            $"/intereses/editar/{interes.Id}");
+    }
+
+    private async Task Delete(
+        Interes interes)
+    {
+        await _repositorioIntereses
+            .EliminarInteres(interes.Id);
+
+        _intereses.Remove(interes);
+    }
+}

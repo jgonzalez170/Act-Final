@@ -1,0 +1,119 @@
+﻿@page "/clientes"
+
+@rendermode InteractiveServer
+
+@using Segunda4F.Data
+@using Segunda4F.Repositorios
+@using Microsoft.AspNetCore.Components.QuickGrid
+
+@inject IRepositorioClientes _repositorioClientes
+@inject NavigationManager _navigationManager
+
+<h3>Clientes</h3>
+
+<button class="btn btn-primary mb-3"
+        @onclick="Nuevo">
+    Nuevo Cliente
+</button>
+
+<QuickGrid Items="_clientes.AsQueryable()"
+           Class="table table-striped"
+           Pagination="_paginationState">
+
+    <PropertyColumn Property="@(p => p.Nombre)"
+                    Title="Nombre" />
+
+    <PropertyColumn Property="@(p => p.Telefono)"
+                    Title="Teléfono" />
+
+    <PropertyColumn Property="@(p => p.Correo)"
+                    Title="Correo" />
+
+    <TemplateColumn Title="Tipo Cliente">
+
+        @if (context.TipoCliente != null)
+        {
+            @context.TipoCliente.Nombre
+        }
+        else
+        {
+            <span class="text-muted">
+                Sin tipo
+            </span>
+        }
+
+    </TemplateColumn>
+
+    <TemplateColumn Title="Intereses">
+
+        @foreach (var item
+                in context.ClienteIntereses)
+        {
+            <span class="badge bg-secondary me-1">
+                @item.Interes!.Nombre
+            </span>
+        }
+
+    </TemplateColumn>
+
+    <TemplateColumn Title="Acciones">
+
+        <button class="btn btn-outline-primary"
+                @onclick="@(() => Edit(context))">
+            Editar
+        </button>
+
+        <button class="btn btn-outline-danger"
+                @onclick="@(() => Delete(context))">
+            Eliminar
+        </button>
+
+    </TemplateColumn>
+
+</QuickGrid>
+
+<Paginator State="_paginationState" />
+
+@code {
+
+    private List<Cliente>
+        _clientes = new();
+
+    private PaginationState
+        _paginationState =
+            new()
+            {
+                ItemsPerPage = 5
+            };
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        _clientes =
+            await _repositorioClientes
+            .ObtenerClientes();
+    }
+
+    private void Nuevo()
+    {
+        _navigationManager
+            .NavigateTo("/clientes/nueva");
+    }
+
+    private void Edit(
+        Cliente cliente)
+    {
+        _navigationManager
+            .NavigateTo(
+                $"/clientes/editar/{cliente.Id}");
+    }
+
+    private async Task Delete(
+        Cliente cliente)
+    {
+        await _repositorioClientes
+            .EliminarCliente(cliente.Id);
+
+        _clientes.Remove(cliente);
+    }
+}

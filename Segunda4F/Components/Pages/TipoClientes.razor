@@ -1,0 +1,87 @@
+﻿@page "/tipoclientes"
+
+@rendermode InteractiveServer
+
+@using Segunda4F.Data
+@using Segunda4F.Repositorios
+@using Microsoft.AspNetCore.Components.QuickGrid
+
+@inject NavigationManager _navigationManager
+@inject IRepositorioTipoClientes _repositorioTipoClientes
+
+<PageTitle>Tipos de Cliente</PageTitle>
+
+<h3>Tipos de Cliente</h3>
+
+<button class="btn btn-primary mb-3"
+        @onclick="Nuevo">
+    Nuevo Tipo Cliente
+</button>
+
+<QuickGrid Items="_tiposCliente.AsQueryable()"
+           Class="table table-striped"
+           Pagination="_paginationState">
+
+    <PropertyColumn Property="@(p => p.Nombre)"
+                    Title="Nombre"
+                    Sortable="true" />
+
+    <TemplateColumn Title="Acciones">
+
+        <button class="btn btn-outline-primary"
+                @onclick="@(() => Edit(context))">
+            Editar
+        </button>
+
+        <button class="btn btn-outline-danger"
+                @onclick="@(() => Delete(context))">
+            Eliminar
+        </button>
+
+    </TemplateColumn>
+
+</QuickGrid>
+
+<Paginator State="_paginationState" />
+
+@code {
+
+    private List<TipoCliente>
+        _tiposCliente = new();
+
+    private PaginationState
+        _paginationState =
+            new() { ItemsPerPage = 5 };
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        _tiposCliente =
+            await _repositorioTipoClientes
+            .ObtenerTipoClientes();
+    }
+
+    private void Nuevo()
+    {
+        _navigationManager
+            .NavigateTo("/tipoclientes/nueva");
+    }
+
+    private void Edit(
+        TipoCliente tipoCliente)
+    {
+        _navigationManager.NavigateTo(
+            $"/tipoclientes/editar/{tipoCliente.Id}");
+    }
+
+    private async Task Delete(
+        TipoCliente tipoCliente)
+    {
+        await _repositorioTipoClientes
+            .EliminarTipoCliente(
+                tipoCliente.Id);
+
+        _tiposCliente.Remove(
+            tipoCliente);
+    }
+}

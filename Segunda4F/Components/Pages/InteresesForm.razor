@@ -1,0 +1,112 @@
+﻿@page "/intereses/nuevo"
+@page "/intereses/editar/{Id:int}"
+
+@rendermode InteractiveServer
+
+@using Segunda4F.Data
+@using Segunda4F.Repositorios
+
+@inject IRepositorioIntereses _repositorioIntereses
+@inject NavigationManager _navigationManager
+
+<PageTitle>Interés</PageTitle>
+
+<h3>Interés</h3>
+
+@if (_error)
+{
+    <div class="alert alert-danger">
+        <h2>No se encontró el interés.</h2>
+    </div>
+}
+else
+{
+    <EditForm Model="_interes"
+              FormName="frmInteres"
+              OnValidSubmit="Guardar">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row mb-3 align-items-center">
+
+            <div class="col-2">
+                <label class="col-form-label">
+                    Nombre
+                </label>
+            </div>
+
+            <div class="col-10">
+                <InputText class="form-control"
+                           @bind-Value="_interes.Nombre" />
+
+                <ValidationMessage For="@(() => _interes.Nombre)" />
+            </div>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary">
+            Guardar
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                @onclick="Cancelar">
+            Cancelar
+        </button>
+
+    </EditForm>
+}
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Interes _interes = new();
+
+    private bool _error = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue && Id.Value > 0)
+        {
+            var interes =
+                await _repositorioIntereses
+                .ObtenerInteresPorId(Id.Value);
+
+            if (interes == null)
+            {
+                _error = true;
+            }
+            else
+            {
+                _interes = interes;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id.HasValue && Id.Value > 0)
+        {
+            await _repositorioIntereses
+                .ActualizarInteres(_interes);
+        }
+        else
+        {
+            await _repositorioIntereses
+                .AgregarInteres(_interes);
+        }
+
+        _navigationManager
+            .NavigateTo("/intereses");
+    }
+
+    private void Cancelar()
+    {
+        _navigationManager
+            .NavigateTo("/intereses");
+    }
+}

@@ -1,0 +1,114 @@
+﻿@page "/productos"
+@rendermode InteractiveServer
+<h3>Productos</h3>
+@if (_error)
+{
+    <div class="alert alert-danger" role="alert">
+        Error al guardar el producto. el número de inventario se encuentra registrado.
+    </div>
+}
+<div class="mb-3">
+    <label for="txtInventario" class="form-label">Inventario</label>
+    <input type="number" class="form-control" id="txtInventario" @bind="_inventario">
+</div>
+<div class="mb-3">
+    <label for="txtDescripcion" class="form-label">Descripción</label>
+    <input type="text" class="form-control" id="txtDescripcion" @bind="_descripcion">
+</div>
+<div class="mb-3">
+    <label for="txtDepartamento" class="form-label">Departamento</label>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="rdbDepa" id="rdbDepa1" @onchange="@(() => _departamento = "Frutas")" checked>
+        <label class="form-check-label" for="rdbDepa1">
+            Frutas
+        </label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="rdbDepa" id="rdbDepa2" @onchange="@(() => _departamento = "Verduras")">
+        <label class="form-check-label" for="rdbDepa2">
+            Verduras
+        </label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="rdbDepa" id="rdbDepa3" @onchange="@(() => _departamento = "Lácteos")">
+        <label class="form-check-label" for="rdbDepa1">
+            Lácteos
+        </label>
+    </div>
+</div>
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="Guardar">Guardar</button>
+    <button class="btn btn-success ms-1" @onclick="@(() => MostrarLista("Completa"))">Lista completa</button>
+    <button class="btn btn-success ms-1" @onclick="@(() => MostrarLista("Frutas"))">Lista de frutas</button>
+    <button class="btn btn-success ms-1" @onclick="@(() => MostrarLista("Verduras"))">Lista de verduras</button>
+    <button class="btn btn-success ms-1" @onclick="@(() => MostrarLista("Lácteos"))">Lista de lácteos</button>
+</div>
+
+@if (_inventariosMostrar.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Inventario</th>
+                <th>Descripción</th>
+                <th>Departamento</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < _inventariosMostrar.Count; i++)
+            {
+                <tr>
+                    <td>@_inventariosMostrar[i]</td>
+                    <td>@_descripcionesMostrar[i]</td>
+                    <td>@_departamentosMostrar[i]</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private int _inventario;
+    private string _descripcion = string.Empty;
+    private string _departamento = "Frutas";
+    private List<int> _inventarios = new List<int>();
+    private List<string> _descripciones = new List<string>();
+    private List<string> _departamentos = new List<string>();
+    private List<int> _inventariosMostrar = new List<int>();
+    private List<string> _descripcionesMostrar = new List<string>();
+    private List<string> _departamentosMostrar = new List<string>();
+    private bool _error = false;
+
+    private void Guardar()
+    {
+        if (_inventarios.Contains(_inventario))
+        {
+            _error = true;
+            return;
+        }
+        _inventarios.Add(_inventario);
+        _descripciones.Add(_descripcion);
+        _departamentos.Add(_departamento);
+        _error = false;
+        _inventario = 0;
+        _descripcion = string.Empty;
+    }
+
+    private void MostrarLista(string departamento)
+    {
+        _inventariosMostrar.Clear();
+        _descripcionesMostrar.Clear();
+        _departamentosMostrar.Clear();
+        for (int i = 0; i < _inventarios.Count; i++)
+        {
+            if (departamento == "Completa" || _departamentos[i] == departamento)
+            {
+                _inventariosMostrar.Add(_inventarios[i]);
+                _descripcionesMostrar.Add(_descripciones[i]);
+                _departamentosMostrar.Add(_departamentos[i]);
+            }
+        }
+    }
+
+}

@@ -9,54 +9,64 @@
 @inject IRepositorioIntereses _repositorioIntereses
 @inject NavigationManager _navigationManager
 
-<PageTitle>Interés</PageTitle>
-
-<h3>Interés</h3>
+<PageTitle>@(Id.HasValue && Id.Value > 0 ? "Editar Interés" : "Nuevo Interés")</PageTitle>
 
 @if (_error)
 {
-    <div class="alert alert-danger">
-        <h2>No se encontró el interés.</h2>
+    <div class="form-alert form-alert-danger">
+        <span class="alert-icon">⚠</span>
+        No se encontró el interés.
     </div>
 }
 else
 {
-    <EditForm Model="_interes"
-              FormName="frmInteres"
-              OnValidSubmit="Guardar">
+    <div class="form-card">
 
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="row mb-3 align-items-center">
-
-            <div class="col-2">
-                <label class="col-form-label">
-                    Nombre
-                </label>
-            </div>
-
-            <div class="col-10">
-                <InputText class="form-control"
-                           @bind-Value="_interes.Nombre" />
-
-                <ValidationMessage For="@(() => _interes.Nombre)" />
-            </div>
-
+        <div class="form-card-header">
+            <h3 class="form-card-title">
+                @(Id.HasValue && Id.Value > 0 ? "Editar Interés" : "Nuevo Interés")
+            </h3>
+            <p class="form-card-subtitle">
+                @(Id.HasValue && Id.Value > 0
+                    ? "Modifica el nombre del interés"
+                    : "Ingresa el nombre del nuevo interés")
+            </p>
         </div>
 
-        <button type="submit"
-                class="btn btn-primary">
-            Guardar
-        </button>
+        <EditForm Model="_interes"
+                  FormName="frmInteres"
+                  OnValidSubmit="Guardar">
 
-        <button type="button"
-                class="btn btn-secondary ms-2"
-                @onclick="Cancelar">
-            Cancelar
-        </button>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="form-validation-summary" />
 
-    </EditForm>
+            <div class="form-section">
+                <h4 class="form-section-title">Información</h4>
+
+                <div class="form-field">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-input"
+                               placeholder="Ej. Tecnología, Deportes…"
+                               @bind-Value="_interes.Nombre" />
+                    <ValidationMessage For="@(() => _interes.Nombre)" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button"
+                        class="btn-form-cancel"
+                        @onclick="Cancelar">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="btn-form-save">
+                    @(Id.HasValue && Id.Value > 0 ? "Guardar cambios" : "Crear interés")
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
 }
 
 @code {
@@ -72,41 +82,28 @@ else
     {
         if (Id.HasValue && Id.Value > 0)
         {
-            var interes =
-                await _repositorioIntereses
+            var interes = await _repositorioIntereses
                 .ObtenerInteresPorId(Id.Value);
 
             if (interes == null)
-            {
                 _error = true;
-            }
             else
-            {
                 _interes = interes;
-            }
         }
     }
 
     private async Task Guardar()
     {
         if (Id.HasValue && Id.Value > 0)
-        {
-            await _repositorioIntereses
-                .ActualizarInteres(_interes);
-        }
+            await _repositorioIntereses.ActualizarInteres(_interes);
         else
-        {
-            await _repositorioIntereses
-                .AgregarInteres(_interes);
-        }
+            await _repositorioIntereses.AgregarInteres(_interes);
 
-        _navigationManager
-            .NavigateTo("/intereses");
+        _navigationManager.NavigateTo("/intereses");
     }
 
     private void Cancelar()
     {
-        _navigationManager
-            .NavigateTo("/intereses");
+        _navigationManager.NavigateTo("/intereses");
     }
 }

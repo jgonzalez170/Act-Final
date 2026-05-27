@@ -11,128 +11,119 @@
 @inject IRepositorioIntereses _repositorioIntereses
 @inject NavigationManager _navigationManager
 
-<PageTitle>Cliente</PageTitle>
-
-<h3>Cliente</h3>
+<PageTitle>@(Id.HasValue && Id.Value > 0 ? "Editar Cliente" : "Nuevo Cliente")</PageTitle>
 
 @if (_error)
 {
-    <div class="alert alert-danger">
-        <h2>No se encontró el cliente.</h2>
+    <div class="form-alert form-alert-danger">
+        <span class="alert-icon">⚠</span>
+        No se encontró el cliente.
     </div>
 }
 else
 {
-    @if (!string.IsNullOrWhiteSpace(_mensajeError))
-    {
-        <div class="alert alert-danger">
-            @_mensajeError
-        </div>
-    }
-    <EditForm Model="_cliente"
-              FormName="frmCliente"
-              OnValidSubmit="Guardar">
+    <div class="form-card">
 
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="row mb-3">
-            <div class="col-2">
-                <label>Nombre</label>
-            </div>
-            <div class="col-10">
-                <InputText class="form-control"
-                           @bind-Value="_cliente.Nombre" />
-            </div>
+        <div class="form-card-header">
+            <h3 class="form-card-title">
+                @(Id.HasValue && Id.Value > 0 ? "Editar Cliente" : "Nuevo Cliente")
+            </h3>
+            <p class="form-card-subtitle">
+                @(Id.HasValue && Id.Value > 0
+                    ? "Modifica los datos del cliente"
+                    : "Completa los datos para registrar un nuevo cliente")
+            </p>
         </div>
 
-        <div class="row mb-3">
-            <div class="col-2">
-                <label>Teléfono</label>
+        @if (!string.IsNullOrWhiteSpace(_mensajeError))
+        {
+            <div class="form-alert form-alert-danger">
+                <span class="alert-icon">⚠</span>
+                @_mensajeError
             </div>
-            <div class="col-10">
-                <InputText class="form-control"
-                           maxlength="10"
-                           @bind-Value="_cliente.Telefono" />
-            </div>
-        </div>
+        }
 
-        <div class="row mb-3">
-            <div class="col-2">
-                <label>Correo</label>
-            </div>
-            <div class="col-10">
-                <InputText class="form-control"
-                           @bind-Value="_cliente.Correo" />
-            </div>
-        </div>
+        <EditForm Model="_cliente"
+                  FormName="frmCliente"
+                  OnValidSubmit="Guardar">
 
-        <div class="row mb-3">
-            <div class="col-2">
-                <label>Tipo Cliente</label>
-            </div>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="form-validation-summary" />
 
-            <div class="col-10">
-                <InputSelect class="form-select"
-                             @bind-Value="_cliente.TipoClienteId">
+            <div class="form-section">
+                <h4 class="form-section-title">Información general</h4>
 
-                    <option value="">
-                        Seleccione
-                    </option>
+                <div class="form-field">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-input"
+                               placeholder="Nombre completo"
+                               @bind-Value="_cliente.Nombre" />
+                </div>
 
-                    @foreach (var tipo in _tiposCliente)
-                    {
-                        <option value="@tipo.Id">
-                            @tipo.Nombre
-                        </option>
-                    }
-
-                </InputSelect>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-2">
-                <label>Intereses</label>
-            </div>
-
-            <div class="col-10">
-
-                @foreach (var interes in _intereses)
-                {
-                    <div class="form-check">
-
-                        <input class="form-check-input"
-                               type="checkbox"
-                               checked="@IsInteresSeleccionado(interes.Id)"
-                               @onchange="(e) =>
-                               OnInteresChanged(
-                               interes.Id,
-                               Convert.ToBoolean(e.Value))" />
-
-                <label class="form-check-label">
-                    @interes.Nombre
-                </label>
-
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label">Teléfono</label>
+                        <InputText class="form-input"
+                                   maxlength="10"
+                                   placeholder="10 dígitos"
+                                   @bind-Value="_cliente.Telefono" />
                     </div>
+                    <div class="form-field">
+                        <label class="form-label">Correo electrónico</label>
+                        <InputText class="form-input"
+                                   placeholder="correo@ejemplo.com"
+                                   @bind-Value="_cliente.Correo" />
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label">Tipo de cliente</label>
+                    <InputSelect class="form-input form-select-input"
+                                 @bind-Value="_cliente.TipoClienteId">
+                        <option value="">— Seleccione un tipo —</option>
+                        @foreach (var tipo in _tiposCliente)
+                        {
+                            <option value="@tipo.Id">@tipo.Nombre</option>
                         }
-
+                    </InputSelect>
+                </div>
             </div>
-        </div>
 
-        <button type="submit"
-                class="btn btn-primary">
-            Guardar
-        </button>
+            <div class="form-section">
+                <h4 class="form-section-title">Intereses</h4>
+                <p class="form-section-hint">Selecciona todos los que apliquen</p>
 
-        <button type="button"
-                class="btn btn-secondary ms-2"
-                @onclick="Cancelar">
-            Cancelar
-        </button>
+                <div class="intereses-grid">
+                    @foreach (var interes in _intereses)
+                    {
+                        var seleccionado = IsInteresSeleccionado(interes.Id);
+                        <label class="interes-chip @(seleccionado ? "interes-chip-active" : "")">
+                            <input type="checkbox"
+                                   checked="@seleccionado"
+                                   @onchange="(e) => OnInteresChanged(interes.Id, Convert.ToBoolean(e.Value))" />
+                            @interes.Nombre
+                        </label>
+                    }
+                </div>
+            </div>
 
-    </EditForm>
+            <div class="form-actions">
+                <button type="button"
+                        class="btn-form-cancel"
+                        @onclick="Cancelar">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="btn-form-save">
+                    @(Id.HasValue && Id.Value > 0 ? "Guardar cambios" : "Crear cliente")
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
 }
+
 
 @code {
 

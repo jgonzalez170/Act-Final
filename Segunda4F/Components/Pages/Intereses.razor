@@ -11,60 +11,80 @@
 
 <PageTitle>Intereses</PageTitle>
 
-<h3>Intereses</h3>
+<h3 class="page-title">Intereses</h3>
 
-<button class="btn btn-primary mb-3"
-        @onclick="Nuevo">
-    Nuevo Interés
-</button>
+<div class="toolbar mb-3">
 
-<QuickGrid Items="_intereses.AsQueryable()"
-           Class="table table-striped"
-           Pagination="_paginationState">
+    <button class="btn btn-new"
+            @onclick="Nuevo">
+        + Nuevo Interés
+    </button>
 
-    <PropertyColumn Property="@(p => p.Nombre)"
-                    Title="Nombre"
-                    Sortable="true" />
+    <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               class="search-input"
+               placeholder="Buscar por nombre…"
+               value="@_busqueda"
+               @oninput="@(e => { _busqueda = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })" />
+    </div>
 
-    <TemplateColumn Title="Acciones">
+</div>
 
-        <button class="btn btn-outline-primary"
-                @onclick="@(() => Edit(context))">
-            Editar
-        </button>
+<div class="results-label mb-1">
+    Mostrando @_interesesFiltrados.Count de @_intereses.Count intereses
+</div>
 
-        <button class="btn btn-outline-danger"
-                @onclick="@(() => Delete(context))">
-            Eliminar
-        </button>
+<div class="table-responsive">
+    <QuickGrid Items="_interesesFiltrados.AsQueryable()"
+               Class="table"
+               Pagination="_paginationState">
 
-    </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Nombre)"
+                        Title="Nombre"
+                        Sortable="true" />
 
-</QuickGrid>
+        <TemplateColumn Title="Acciones">
+            <div class="actions">
+                <button class="btn btn-sm btn-edit"
+                        @onclick="@(() => Edit(context))">
+                    Editar
+                </button>
+                <button class="btn btn-sm btn-delete"
+                        @onclick="@(() => Delete(context))">
+                    Eliminar
+                </button>
+            </div>
+        </TemplateColumn>
 
-<Paginator State="_paginationState" />
+    </QuickGrid>
+
+    <Paginator State="_paginationState" />
+</div>
 
 @code {
 
-    private List<Interes>
-        _intereses = new();
+    private List<Interes> _intereses = new();
 
-    private PaginationState
-        _paginationState =
-            new() { ItemsPerPage = 5 };
+    private string _busqueda = string.Empty;
 
-    protected override async Task
-        OnInitializedAsync()
+    private List<Interes> _interesesFiltrados =>
+        _intereses.Where(i =>
+            string.IsNullOrWhiteSpace(_busqueda) ||
+            i.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+
+    private PaginationState _paginationState =
+        new() { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
     {
-        _intereses =
-            await _repositorioIntereses
-            .ObtenerIntereses();
+        _intereses = await _repositorioIntereses.ObtenerIntereses();
     }
 
     private void Nuevo()
     {
-        _navigationManager
-            .NavigateTo("/intereses/nuevo");
+        _navigationManager.NavigateTo("/intereses/nuevo");
     }
 
     private void Edit(Interes interes)
@@ -73,12 +93,9 @@
             $"/intereses/editar/{interes.Id}");
     }
 
-    private async Task Delete(
-        Interes interes)
+    private async Task Delete(Interes interes)
     {
-        await _repositorioIntereses
-            .EliminarInteres(interes.Id);
-
+        await _repositorioIntereses.EliminarInteres(interes.Id);
         _intereses.Remove(interes);
     }
 }

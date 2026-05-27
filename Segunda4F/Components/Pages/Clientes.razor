@@ -9,111 +9,174 @@
 @inject IRepositorioClientes _repositorioClientes
 @inject NavigationManager _navigationManager
 
-<h3>Clientes</h3>
+<h3 class="page-title">Clientes</h3>
 
-<button class="btn btn-primary mb-3"
-        @onclick="Nuevo">
-    Nuevo Cliente
-</button>
+<div class="toolbar mb-3">
 
-<QuickGrid Items="_clientes.AsQueryable()"
-           Class="table table-striped"
-           Pagination="_paginationState">
+    <button class="btn btn-new"
+            @onclick="Nuevo">
+        + Nuevo Cliente
+    </button>
 
-    <PropertyColumn Property="@(p => p.Nombre)"
-                    Title="Nombre" />
+    <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               class="search-input"
+               placeholder="Buscar por nombre, teléfono o correo…"
+               value="@_busqueda"
+               @oninput="@(e => { _busqueda = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })" />
+    </div>
 
-    <PropertyColumn Property="@(p => p.Telefono)"
-                    Title="Teléfono" />
-
-    <PropertyColumn Property="@(p => p.Correo)"
-                    Title="Correo" />
-
-    <TemplateColumn Title="Tipo Cliente">
-
-        @if (context.TipoCliente != null)
+    <select class="filter-select"
+            value="@_filtroTipo"
+            @onchange="@(e => { _filtroTipo = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })">
+        <option value="">Todos los tipos</option>
+        @foreach (var tipo in _tiposUnicos)
         {
-            @context.TipoCliente.Nombre
+            <option value="@tipo">@tipo</option>
         }
-        else
+    </select>
+
+    <select class="filter-select"
+            value="@_filtroInteres"
+            @onchange="@(e => { _filtroInteres = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })">
+        <option value="">Todos los intereses</option>
+        @foreach (var interes in _interesesUnicos)
         {
-            <span class="text-muted">
-                Sin tipo
-            </span>
+            <option value="@interes">@interes</option>
         }
+    </select>
 
-    </TemplateColumn>
+</div>
 
-    <TemplateColumn Title="Intereses">
+<div class="results-label mb-1">
+    Mostrando @_clientesFiltrados.Count de @_clientes.Count clientes
+</div>
 
-        @foreach (var item
-                in context.ClienteIntereses)
-        {
-            <span class="badge bg-secondary me-1">
-                @item.Interes!.Nombre
-            </span>
-        }
+<div class="table-responsive">
+    <QuickGrid Items="_clientesFiltrados.AsQueryable()"
+               Class="table"
+               Pagination="_paginationState">
 
-    </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Nombre)"
+                        Title="Nombre"
+                        Sortable="true" />
 
-    <TemplateColumn Title="Acciones">
+        <PropertyColumn Property="@(p => p.Telefono)"
+                        Title="Teléfono"
+                        Sortable="true" />
 
-        <button class="btn btn-outline-primary"
-                @onclick="@(() => Edit(context))">
-            Editar
-        </button>
+        <PropertyColumn Property="@(p => p.Correo)"
+                        Title="Correo"
+                        Sortable="true" />
 
-        <button class="btn btn-outline-danger"
-                @onclick="@(() => Delete(context))">
-            Eliminar
-        </button>
+        <TemplateColumn Title="Tipo Cliente">
+            @if (context.TipoCliente != null)
+            {
+                <span class="tipo-cliente-pill">
+                    @context.TipoCliente.Nombre
+                </span>
+            }
+            else
+            {
+                <span class="text-sin-tipo">Sin tipo</span>
+            }
+        </TemplateColumn>
 
-    </TemplateColumn>
+        <TemplateColumn Title="Intereses">
+            @foreach (var item in context.ClienteIntereses)
+            {
+                <span class="badge">
+                    @item.Interes!.Nombre
+                </span>
+            }
+        </TemplateColumn>
 
-</QuickGrid>
+        <TemplateColumn Title="Acciones">
+            <div class="actions">
+                <button class="btn btn-sm btn-edit"
+                        @onclick="@(() => Edit(context))">
+                    Editar
+                </button>
+                <button class="btn btn-sm btn-delete"
+                        @onclick="@(() => Delete(context))">
+                    Eliminar
+                </button>
+            </div>
+        </TemplateColumn>
 
-<Paginator State="_paginationState" />
+    </QuickGrid>
+
+    <Paginator State="_paginationState" />
+</div>
+
 
 @code {
 
-    private List<Cliente>
-        _clientes = new();
+    private List<Cliente> _clientes = new();
 
-    private PaginationState
-        _paginationState =
-            new()
-            {
-                ItemsPerPage = 5
-            };
+    private string _busqueda = string.Empty;
+    private string _filtroTipo = string.Empty;
+    private string _filtroInteres = string.Empty;
 
-    protected override async Task
-        OnInitializedAsync()
+    private List<string> _tiposUnicos = new();
+    private List<string> _interesesUnicos = new();
+
+    private List<Cliente> _clientesFiltrados =>
+        _clientes.Where(c =>
+        {
+            var matchBusqueda = string.IsNullOrWhiteSpace(_busqueda)
+                || c.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+                || (c.Telefono?.Contains(_busqueda) ?? false)
+                || (c.Correo?.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ?? false);
+
+            var matchTipo = string.IsNullOrEmpty(_filtroTipo)
+                || (c.TipoCliente?.Nombre == _filtroTipo);
+
+            var matchInteres = string.IsNullOrEmpty(_filtroInteres)
+                || c.ClienteIntereses.Any(ci =>
+                    ci.Interes?.Nombre == _filtroInteres);
+
+            return matchBusqueda && matchTipo && matchInteres;
+        }).ToList();
+
+    private PaginationState _paginationState =
+        new() { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
     {
-        _clientes =
-            await _repositorioClientes
-            .ObtenerClientes();
+        _clientes = await _repositorioClientes.ObtenerClientes();
+
+        _tiposUnicos = _clientes
+            .Where(c => c.TipoCliente != null)
+            .Select(c => c.TipoCliente!.Nombre)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+
+        _interesesUnicos = _clientes
+            .SelectMany(c => c.ClienteIntereses)
+            .Select(ci => ci.Interes?.Nombre ?? string.Empty)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Distinct()
+            .OrderBy(i => i)
+            .ToList();
     }
 
     private void Nuevo()
     {
-        _navigationManager
-            .NavigateTo("/clientes/nueva");
+        _navigationManager.NavigateTo("/clientes/nueva");
     }
 
-    private void Edit(
-        Cliente cliente)
+    private void Edit(Cliente cliente)
     {
-        _navigationManager
-            .NavigateTo(
-                $"/clientes/editar/{cliente.Id}");
+        _navigationManager.NavigateTo(
+            $"/clientes/editar/{cliente.Id}");
     }
 
-    private async Task Delete(
-        Cliente cliente)
+    private async Task Delete(Cliente cliente)
     {
-        await _repositorioClientes
-            .EliminarCliente(cliente.Id);
-
+        await _repositorioClientes.EliminarCliente(cliente.Id);
         _clientes.Remove(cliente);
     }
 }

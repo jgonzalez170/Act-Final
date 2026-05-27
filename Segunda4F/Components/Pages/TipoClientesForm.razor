@@ -9,52 +9,64 @@
 @inject IRepositorioTipoClientes _repositorioTipoClientes
 @inject NavigationManager _navigationManager
 
-<PageTitle>Tipos de Cliente</PageTitle>
-
-<h3>Tipos de Cliente</h3>
+<PageTitle>@(Id.HasValue && Id.Value > 0 ? "Editar Tipo de Cliente" : "Nuevo Tipo de Cliente")</PageTitle>
 
 @if (_error)
 {
-    <div class="alert alert-danger">
-        <h2>No se encontró el tipo de cliente.</h2>
+    <div class="form-alert form-alert-danger">
+        <span class="alert-icon">⚠</span>
+        No se encontró el tipo de cliente.
     </div>
 }
 else
 {
-    <EditForm Model="_tipoCliente"
-              FormName="frmTipoCliente"
-              OnValidSubmit="Guardar">
+    <div class="form-card">
 
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="row mb-3 align-items-center">
-            <div class="col-2">
-                <label class="col-form-label">
-                    Nombre
-                </label>
-            </div>
-
-            <div class="col-10">
-                <InputText class="form-control"
-                           @bind-Value="_tipoCliente.Nombre" />
-
-                <ValidationMessage For="@(() => _tipoCliente.Nombre)" />
-            </div>
+        <div class="form-card-header">
+            <h3 class="form-card-title">
+                @(Id.HasValue && Id.Value > 0 ? "Editar Tipo de Cliente" : "Nuevo Tipo de Cliente")
+            </h3>
+            <p class="form-card-subtitle">
+                @(Id.HasValue && Id.Value > 0
+                    ? "Modifica el nombre del tipo de cliente"
+                    : "Ingresa el nombre del nuevo tipo de cliente")
+            </p>
         </div>
 
-        <button type="submit"
-                class="btn btn-primary">
-            Guardar
-        </button>
+        <EditForm Model="_tipoCliente"
+                  FormName="frmTipoCliente"
+                  OnValidSubmit="Guardar">
 
-        <button type="button"
-                class="btn btn-secondary ms-2"
-                @onclick="Cancelar">
-            Cancelar
-        </button>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="form-validation-summary" />
 
-    </EditForm>
+            <div class="form-section">
+                <h4 class="form-section-title">Información</h4>
+
+                <div class="form-field">
+                    <label class="form-label">Nombre</label>
+                    <InputText class="form-input"
+                               placeholder="Ej. Premium, Frecuente, VIP…"
+                               @bind-Value="_tipoCliente.Nombre" />
+                    <ValidationMessage For="@(() => _tipoCliente.Nombre)" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button"
+                        class="btn-form-cancel"
+                        @onclick="Cancelar">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="btn-form-save">
+                    @(Id.HasValue && Id.Value > 0 ? "Guardar cambios" : "Crear tipo")
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
 }
 
 @code {
@@ -70,43 +82,28 @@ else
     {
         if (Id.HasValue && Id.Value > 0)
         {
-            var tipo =
-                await _repositorioTipoClientes
+            var tipo = await _repositorioTipoClientes
                 .ObtenerTipoClientePorId(Id.Value);
 
             if (tipo == null)
-            {
                 _error = true;
-            }
             else
-            {
                 _tipoCliente = tipo;
-            }
         }
     }
 
     private async Task Guardar()
     {
         if (Id.HasValue && Id.Value > 0)
-        {
-            await _repositorioTipoClientes
-                .ActualizarTipoCliente(
-                    _tipoCliente);
-        }
+            await _repositorioTipoClientes.ActualizarTipoCliente(_tipoCliente);
         else
-        {
-            await _repositorioTipoClientes
-                .AgregarTipoCliente(
-                    _tipoCliente);
-        }
+            await _repositorioTipoClientes.AgregarTipoCliente(_tipoCliente);
 
-        _navigationManager
-            .NavigateTo("/tipoclientes");
+        _navigationManager.NavigateTo("/tipoclientes");
     }
 
     private void Cancelar()
     {
-        _navigationManager
-            .NavigateTo("/tipoclientes");
+        _navigationManager.NavigateTo("/tipoclientes");
     }
 }

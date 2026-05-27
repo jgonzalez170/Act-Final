@@ -11,77 +11,92 @@
 
 <PageTitle>Tipos de Cliente</PageTitle>
 
-<h3>Tipos de Cliente</h3>
+<h3 class="page-title">Tipos de Cliente</h3>
 
-<button class="btn btn-primary mb-3"
-        @onclick="Nuevo">
-    Nuevo Tipo Cliente
-</button>
+<div class="toolbar mb-3">
 
-<QuickGrid Items="_tiposCliente.AsQueryable()"
-           Class="table table-striped"
-           Pagination="_paginationState">
+    <button class="btn btn-new"
+            @onclick="Nuevo">
+        + Nuevo Tipo
+    </button>
 
-    <PropertyColumn Property="@(p => p.Nombre)"
-                    Title="Nombre"
-                    Sortable="true" />
+    <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text"
+               class="search-input"
+               placeholder="Buscar por nombre…"
+               value="@_busqueda"
+               @oninput="@(e => { _busqueda = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })" />
+    </div>
 
-    <TemplateColumn Title="Acciones">
+</div>
 
-        <button class="btn btn-outline-primary"
-                @onclick="@(() => Edit(context))">
-            Editar
-        </button>
+<div class="results-label mb-1">
+    Mostrando @_tiposFiltrados.Count de @_tiposCliente.Count tipos
+</div>
 
-        <button class="btn btn-outline-danger"
-                @onclick="@(() => Delete(context))">
-            Eliminar
-        </button>
+<div class="table-responsive">
+    <QuickGrid Items="_tiposFiltrados.AsQueryable()"
+               Class="table"
+               Pagination="_paginationState">
 
-    </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Nombre)"
+                        Title="Nombre"
+                        Sortable="true" />
 
-</QuickGrid>
+        <TemplateColumn Title="Acciones">
+            <div class="actions">
+                <button class="btn btn-sm btn-edit"
+                        @onclick="@(() => Edit(context))">
+                    Editar
+                </button>
+                <button class="btn btn-sm btn-delete"
+                        @onclick="@(() => Delete(context))">
+                    Eliminar
+                </button>
+            </div>
+        </TemplateColumn>
 
-<Paginator State="_paginationState" />
+    </QuickGrid>
+
+    <Paginator State="_paginationState" />
+</div>
 
 @code {
 
-    private List<TipoCliente>
-        _tiposCliente = new();
+    private List<TipoCliente> _tiposCliente = new();
 
-    private PaginationState
-        _paginationState =
-            new() { ItemsPerPage = 5 };
+    private string _busqueda = string.Empty;
 
-    protected override async Task
-        OnInitializedAsync()
+    private List<TipoCliente> _tiposFiltrados =>
+        _tiposCliente.Where(t =>
+            string.IsNullOrWhiteSpace(_busqueda) ||
+            t.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+
+    private PaginationState _paginationState =
+        new() { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
     {
-        _tiposCliente =
-            await _repositorioTipoClientes
-            .ObtenerTipoClientes();
+        _tiposCliente = await _repositorioTipoClientes.ObtenerTipoClientes();
     }
 
     private void Nuevo()
     {
-        _navigationManager
-            .NavigateTo("/tipoclientes/nueva");
+        _navigationManager.NavigateTo("/tipoclientes/nueva");
     }
 
-    private void Edit(
-        TipoCliente tipoCliente)
+    private void Edit(TipoCliente tipoCliente)
     {
         _navigationManager.NavigateTo(
             $"/tipoclientes/editar/{tipoCliente.Id}");
     }
 
-    private async Task Delete(
-        TipoCliente tipoCliente)
+    private async Task Delete(TipoCliente tipoCliente)
     {
-        await _repositorioTipoClientes
-            .EliminarTipoCliente(
-                tipoCliente.Id);
-
-        _tiposCliente.Remove(
-            tipoCliente);
+        await _repositorioTipoClientes.EliminarTipoCliente(tipoCliente.Id);
+        _tiposCliente.Remove(tipoCliente);
     }
 }
+

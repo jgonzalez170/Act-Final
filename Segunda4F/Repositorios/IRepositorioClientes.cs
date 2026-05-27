@@ -4,13 +4,18 @@ namespace Segunda4F.Repositorios
 {
     public interface IRepositorioClientes
     {
-        Task AgregarCliente(Cliente cliente);
+        Task AgregarCliente(
+      Cliente cliente,
+      List<int> interesesIds);
 
         Task<List<Cliente>> ObtenerClientes();
 
         Task<Cliente?> ObtenerClientePorId(int id);
 
-        Task ActualizarCliente(Cliente cliente);
+
+        Task ActualizarCliente(
+            Cliente cliente,
+            List<int> interesesIds);
 
         Task EliminarCliente(int id);
     }

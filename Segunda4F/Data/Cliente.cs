@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 namespace Segunda4F.Data
 {
+    [Index(nameof(Correo), IsUnique = true)]
     public class Cliente
     {
         [Key]
@@ -9,9 +11,12 @@ namespace Segunda4F.Data
 
         [Required]
         public string Nombre { get; set; } = string.Empty;
-
+        [Phone]
+        [Required]
         public string Telefono { get; set; } = string.Empty;
 
+        [Required]
+        [EmailAddress]
         public string Correo { get; set; } = string.Empty;
         public int? TipoClienteId { get; set; }
 

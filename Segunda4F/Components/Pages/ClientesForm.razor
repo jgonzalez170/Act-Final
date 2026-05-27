@@ -23,6 +23,12 @@
 }
 else
 {
+    @if (!string.IsNullOrWhiteSpace(_mensajeError))
+    {
+        <div class="alert alert-danger">
+            @_mensajeError
+        </div>
+    }
     <EditForm Model="_cliente"
               FormName="frmCliente"
               OnValidSubmit="Guardar">
@@ -46,6 +52,7 @@ else
             </div>
             <div class="col-10">
                 <InputText class="form-control"
+                           maxlength="10"
                            @bind-Value="_cliente.Telefono" />
             </div>
         </div>
@@ -135,6 +142,7 @@ else
     private Cliente _cliente = new();
 
     private bool _error = false;
+    private string _mensajeError = "";
 
     private List<TipoCliente>
         _tiposCliente = new();
@@ -207,29 +215,32 @@ else
 
     private async Task Guardar()
     {
-        _cliente.ClienteIntereses =
-            _interesesSeleccionados
-            .Select(id => new ClienteInteres
+        try
+        {
+            _mensajeError = "";
+
+            if (Id.HasValue && Id.Value > 0)
             {
-                ClienteId = _cliente.Id,
-                InteresId = id
-            }).ToList();
+                await _repositorioClientes
+                    .ActualizarCliente(
+                        _cliente,
+                        _interesesSeleccionados);
+            }
+            else
+            {
+                await _repositorioClientes
+                    .AgregarCliente(
+                        _cliente,
+                        _interesesSeleccionados);
+            }
 
-        if (Id.HasValue && Id.Value > 0)
-        {
-            await _repositorioClientes
-                .ActualizarCliente(
-                    _cliente);
+            _navigationManager
+                .NavigateTo("/clientes");
         }
-        else
+        catch (Exception ex)
         {
-            await _repositorioClientes
-                .AgregarCliente(
-                    _cliente);
+            _mensajeError = ex.Message;
         }
-
-        _navigationManager
-            .NavigateTo("/clientes");
     }
 
     private void Cancelar()
